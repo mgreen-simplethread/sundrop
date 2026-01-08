@@ -1,4 +1,5 @@
 import { Glob } from 'bun';
+import { exists } from 'node:fs/promises';
 import { resolve, join, dirname, basename } from 'node:path';
 
 interface IconSearchOptions {
@@ -22,7 +23,7 @@ export default class IconSearch {
 
   public static defaults: Partial<IconSearchOptions> = {
     cwd: process.cwd(),
-    idPrefix: 'icon-',
+    idPrefix: '',
     aliases: {},
     searchPattern: '**/*',
   };
@@ -138,9 +139,10 @@ export default class IconSearch {
       console.log(`Could not resolve ${pkgName}, trying to match path directly in node_modules`);
 
       resolvedPath = join(process.cwd(), 'node_modules', name);
-      const exists = await Bun.file(resolvedPath).exists();
+      console.debug('resolvedPath: %s', resolvedPath);
+      const pathExists = await exists(resolvedPath);
 
-      if (!exists) {
+      if (!pathExists) {
         throw new Error(`Could not resolve ${pkgName}`);
       }
     }

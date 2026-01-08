@@ -73,9 +73,9 @@ export const DEFAULT_SVGO_PLUGINS = [
 ];
 
 interface SpriteGeneratorOptions {
-  inputFiles: Record<string, string>;
+  inputFiles: Set<string>;
   svgoPlugins: Array<any>;
-  idPrefix: string;
+  idPrefix?: string;
   transformIcon: (json: any) => any;
   spriteTemplate: (symbolBuffer: string) => string;
 }
@@ -98,9 +98,9 @@ export default class SpriteGenerator {
     let buffer = '';
 
     // TODO: allow transformation and normalization of ID prefixes
-    for (const [_id, path] of Object.entries(this.options.inputFiles)) {
-      const rawSvg = await Bun.file(path).text();
-      buffer += optimize(rawSvg, { plugins: this.options.svgoPlugins });
+    for (const svgFile of this.options.inputFiles) {
+      const rawSvg = await Bun.file(svgFile).text();
+      buffer += optimize(rawSvg, { plugins: this.options.svgoPlugins }).data;
     }
 
     return buffer;

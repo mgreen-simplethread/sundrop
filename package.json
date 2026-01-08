@@ -2,6 +2,9 @@
   "name": "sundrop",
   "module": "index.ts",
   "type": "module",
+  "bin": {
+    "sundrop": "bin/sundrop.js"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^25.0.3",
@@ -25,6 +28,6 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "format": "prettier -w ./lib/**/*.ts ./bin/*"
+    "format": "prettier -w ./lib/**/*.ts ./bin/*.ts"
   }
 }
