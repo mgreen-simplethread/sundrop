@@ -1,0 +1,30 @@
+{
+  "name": "sundrop",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.0.3",
+    "eslint": "^9.39.1",
+    "prettier": "^3.6.2",
+    "@eslint/js": "^9.39.1",
+    "typescript-eslint": "^8.47.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.3.3",
+    "svgo": "^4.0.0"
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "semi": true,
+    "singleQuote": true,
+    "printWidth": 100
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "format": "prettier -w ./lib/**/*.ts ./bin/*"
+  }
+}

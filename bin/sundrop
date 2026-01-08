@@ -1,0 +1,6 @@
+#!/usr/bin/env bun
+
+import SpriteGenerator from '../lib/sprite-generator';
+import IconSearch from '../lib/icon-search';
+
+// vim: set ft=ts :
