@@ -73,10 +73,17 @@ export const DEFAULT_SVGO_PLUGINS = [
   'removeDesc',
   convertSvgToSymbol,
   addCurrentColorFill,
+  {
+    name: 'removeAttrs',
+    params: {
+      attrs: 'symbol:(width|height)',
+    },
+  },
 ];
 
 interface SpriteGeneratorOptions {
-  inputFiles: Set<string>;
+  // inputFiles: Set<string>;
+  inputFiles: Map<string, string>;
   svgoPlugins: Array<any>;
   idPrefix?: string;
   transformIcon: (json: any) => any;
@@ -87,23 +94,28 @@ export default class SpriteGenerator {
   public static defaults: Partial<SpriteGeneratorOptions> = {
     svgoPlugins: DEFAULT_SVGO_PLUGINS,
     transformIcon: (obj) => obj,
+    idPrefix: 'icon-',
     spriteTemplate: (symbolBuffer) =>
       `<svg width="0" height="0" style="position:absolute">${symbolBuffer}</svg>`.trim(),
   };
 
   declare public options: SpriteGeneratorOptions;
-  declare public fileQueue: string[];
+  declare public fileQueue: MapIterator<string[]>;
 
   constructor(options: SpriteGeneratorOptions) {
     this.options = Object.assign({}, SpriteGenerator.defaults, options);
-    this.fileQueue = Array.from(this.options.inputFiles);
+    this.fileQueue = this.options.inputFiles.entries();
   }
 
   async concatenateSvgs() {
     // TODO: allow transformation and normalization of ID prefixes
-    const fileContents = await Promise.all(
-      this.fileQueue.map(async (svgFile) => await Bun.file(svgFile).text()),
-    );
+    const fileContents = [];
+    for (const [id, file] of this.fileQueue) {
+      if (!file) continue;
+      const svg = await Bun.file(file).text();
+      const outputId = id ? `${this.options.idPrefix}${id}` : id;
+      fileContents.push(svg.replace(/^<svg\s+/, `<svg id="${outputId}" `));
+    }
 
     return fileContents.join('\n');
   }

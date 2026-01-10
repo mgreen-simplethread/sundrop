@@ -46,7 +46,8 @@ export default class IconSearch {
     console.time(Timers.SCAN);
 
     let filesScanned = 0;
-    const foundMatches = new Set<string>();
+    const uniqueIcons = new Set<string>();
+    const foundMatches = new Map<string, string>();
     const scanner = glob(this.options.searchPattern, {
       cwd: this.options.cwd as string,
     });
@@ -68,10 +69,9 @@ export default class IconSearch {
     // 3. Search the index against the found tokens
     // This turns the search inside out: We iterate the Index (7k items) checking against the Corpus (O(1) lookup)
     for (const [iconName, iconPath] of this.index) {
-      if (tokens.has(iconName)) {
-        foundMatches.add(iconPath);
-        // Note: We lose the specific file context here (which file contained the icon),
-        // but we gain significant performance and deduping is automatic.
+      if (tokens.has(iconName) && !uniqueIcons.has(iconPath)) {
+        uniqueIcons.add(iconPath);
+        foundMatches.set(iconName, iconPath);
       }
     }
 
