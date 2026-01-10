@@ -1,5 +1,5 @@
 import { Glob } from 'bun';
-import { exists } from 'node:fs/promises';
+import { exists, glob } from 'node:fs/promises';
 import { resolve, join, dirname, basename } from 'node:path';
 
 interface IconSearchOptions {
@@ -16,7 +16,7 @@ const Timers = {
   SCAN: 'scan project files',
 };
 
-const pathIsNodeModule = (path: string) => !/^[\.\/]/.test(path);
+const pathIsNodeModule = (path: string) => !path.startsWith('.') && !path.startsWith('/');
 
 export default class IconSearch {
   public static tokenizer: RegExp = /[^a-za-z0-9_:-]+/;
@@ -30,15 +30,11 @@ export default class IconSearch {
 
   public options: IconSearchOptions;
   public index: Map<string, string>;
-  public indexFiles: Glob;
-  public searchFiles: Glob;
   public idPrefixes: string[];
 
-  constructor(options: IconSearchOptions) {
-    this.options = Object.assign({}, IconSearch.defaults, options);
+  constructor(options: Partial<IconSearchOptions>) {
+    this.options = Object.assign({}, IconSearch.defaults, options) as IconSearchOptions;
     this.index = new Map<string, string>();
-    this.indexFiles = new Glob('**/*.svg');
-    this.searchFiles = new Glob(this.options.searchPattern);
     this.idPrefixes = [this.options.idPrefix].flat();
   }
 
@@ -51,22 +47,32 @@ export default class IconSearch {
 
     let filesScanned = 0;
     const foundMatches = new Set<string>();
-    const scanner = this.searchFiles.scan({
+    const scanner = glob(this.options.searchPattern, {
       cwd: this.options.cwd as string,
-      onlyFiles: true,
-      absolute: true,
     });
 
-    for await (let filePath of scanner) {
-      const tokens = await this.tokenizeFile(filePath);
-
-      for (const token of tokens) {
-        if (token && this.index.has(token)) {
-          foundMatches.add(this.index.get(token) as string);
-          console.log('Found token match for icon (%s) in file %s', token, filePath);
-        }
-      }
+    // 1. Read all files into a single buffer
+    const chunks: string[] = [];
+    for await (const filePath of scanner) {
+      const absPath = resolve(this.options.cwd, filePath);
+      const file = Bun.file(absPath);
+      chunks.push(await file.text());
       filesScanned++;
+    }
+
+    // 2. Tokenize the entire corpus at once
+    // We join with a newline to prevent tokens from merging across file boundaries
+    const corpus = chunks.join('\n');
+    const tokens = new Set(corpus.split(IconSearch.tokenizer));
+
+    // 3. Search the index against the found tokens
+    // This turns the search inside out: We iterate the Index (7k items) checking against the Corpus (O(1) lookup)
+    for (const [iconName, iconPath] of this.index) {
+      if (tokens.has(iconName)) {
+        foundMatches.add(iconPath);
+        // Note: We lose the specific file context here (which file contained the icon),
+        // but we gain significant performance and deduping is automatic.
+      }
     }
 
     console.timeEnd(Timers.SCAN);
@@ -81,17 +87,16 @@ export default class IconSearch {
       const searchPath = pathIsNodeModule(path)
         ? await this.resolvePackage(path)
         : resolve(this.options.cwd as string, path);
-      const scanner = this.indexFiles.scan({
+      const scanner = glob('**/*.svg', {
         cwd: searchPath,
-        onlyFiles: true,
-        absolute: true,
       });
 
       for await (let filePath of scanner) {
-        const ids = this.idsForIcon(filePath);
+        const absPath = resolve(searchPath, filePath);
+        const ids = this.idsForIcon(absPath);
 
         for (const id of ids) {
-          this.index.set(id, filePath);
+          this.index.set(id, absPath);
         }
       }
     }
@@ -116,12 +121,6 @@ export default class IconSearch {
 
   private idsForIcon(filePath: string) {
     return this.idPrefixes.map((pfx) => `${pfx}${basename(filePath, '.svg')}`);
-  }
-
-  private async tokenizeFile(filePath: string) {
-    const file = Bun.file(filePath);
-    const contents = await file.text();
-    return contents.split(IconSearch.tokenizer);
   }
 
   private async resolvePackage(name: string) {

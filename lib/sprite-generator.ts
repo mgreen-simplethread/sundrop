@@ -1,11 +1,14 @@
 import { optimize } from 'svgo';
-import type { CustomPlugin, XastElement } from 'svgo';
+// const { optimize } = require('svgo');
+import type { CustomPlugin, XastElement, XastParent } from 'svgo';
 
 const convertSvgToSymbol: CustomPlugin = {
   name: 'convertSvgToSymbol',
   fn: () => ({
     element: {
-      enter: (node: XastElement) => {
+      enter: (node: XastElement, parentNode: XastParent) => {
+        if (parentNode.type === 'root') return;
+
         if (node.name === 'svg') {
           node.name = 'symbol';
         }
@@ -89,25 +92,26 @@ export default class SpriteGenerator {
   };
 
   declare public options: SpriteGeneratorOptions;
+  declare public fileQueue: string[];
 
   constructor(options: SpriteGeneratorOptions) {
     this.options = Object.assign({}, SpriteGenerator.defaults, options);
+    this.fileQueue = Array.from(this.options.inputFiles);
   }
 
   async concatenateSvgs() {
-    let buffer = '';
-
     // TODO: allow transformation and normalization of ID prefixes
-    for (const svgFile of this.options.inputFiles) {
-      const rawSvg = await Bun.file(svgFile).text();
-      buffer += optimize(rawSvg, { plugins: this.options.svgoPlugins }).data;
-    }
+    const fileContents = await Promise.all(
+      this.fileQueue.map(async (svgFile) => await Bun.file(svgFile).text()),
+    );
 
-    return buffer;
+    return fileContents.join('\n');
   }
 
   async render() {
     const symbols = await this.concatenateSvgs();
-    return this.options.spriteTemplate(symbols);
+    return optimize(this.options.spriteTemplate(symbols), {
+      plugins: this.options.svgoPlugins,
+    }).data;
   }
 }

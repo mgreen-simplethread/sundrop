@@ -1,5 +1,6 @@
 {
   "name": "sundrop",
+  "version": "0.1.0",
   "module": "index.ts",
   "type": "module",
   "bin": {
@@ -18,7 +19,8 @@
   },
   "dependencies": {
     "fast-xml-parser": "^5.3.3",
-    "svgo": "^4.0.0"
+    "svgo": "^4.0.0",
+    "yargs": "^18.0.0"
   },
   "prettier": {
     "tabWidth": 2,
