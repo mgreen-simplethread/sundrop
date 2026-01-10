@@ -7,6 +7,8 @@ import SpriteGenerator from '../lib/sprite-generator';
 import IconSearch from '../lib/icon-search';
 
 const argv = yargs(hideBin(Bun.argv))
+  .usage(`$0 --path PATH_TO_ICONS --out OUTPUT_PATH --files GLOB`)
+  .scriptName('sundrop')
   .pkgConf('sundrop')
   .config('config', 'Path to JSON config file. Values set there are overridden by CLI flags.')
   .alias('config', 'c')

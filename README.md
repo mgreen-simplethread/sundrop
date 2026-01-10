@@ -8,7 +8,21 @@ SunDrop is better than Sprite IRL, but this SunDrop _makes_ sprites by scanning 
 
 ## CLI
 
-It works but docs are still `TODO`.
+```
+sundrop --path PATH_TO_ICONS --out OUTPUT_PATH --files GLOB
+
+Options:
+  -c, --config   Path to JSON config file. Values set there are overridden by
+                 CLI flags.
+  -p, --path     Relative path or node module to search for icons      [array]
+  -o, --out      Output file                               [string] [required]
+  -f, --files    Glob of files to search for icon names
+                                       [string] [default: "./**/*.{html,css}"]
+  -a, --alias    alias for icon name (alias_name:real_icon_name)       [array]
+  -h, --help     Show help                                           [boolean]
+  -v, --version  Show version number                                 [boolean]
+
+```
 
 ## Development
 
