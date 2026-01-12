@@ -1,6 +1,6 @@
 import { optimize } from 'svgo';
-// const { optimize } = require('svgo');
 import type { CustomPlugin, XastElement, XastParent } from 'svgo';
+import type { RequiredKeys } from './types';
 
 const convertSvgToSymbol: CustomPlugin = {
   name: 'convertSvgToSymbol',
@@ -82,16 +82,18 @@ export const DEFAULT_SVGO_PLUGINS = [
 ];
 
 interface SpriteGeneratorOptions {
-  // inputFiles: Set<string>;
-  inputFiles: Map<string, string>;
-  svgoPlugins: Array<any>;
+  inputFiles?: Map<string, string>;
+  svgoPlugins?: Array<any>;
   idPrefix?: string;
-  transformIcon: (json: any) => any;
-  spriteTemplate: (symbolBuffer: string) => string;
+  transformIcon?: (json: any) => any;
+  spriteTemplate?: (symbolBuffer: string) => string;
 }
 
-export default class SpriteGenerator {
-  public static defaults: Partial<SpriteGeneratorOptions> = {
+export class SpriteGenerator {
+  public static defaults: RequiredKeys<
+    SpriteGeneratorOptions,
+    'svgoPlugins' | 'transformIcon' | 'idPrefix' | 'spriteTemplate'
+  > = {
     svgoPlugins: DEFAULT_SVGO_PLUGINS,
     transformIcon: (obj) => obj,
     idPrefix: 'icon-',
@@ -99,10 +101,10 @@ export default class SpriteGenerator {
       `<svg width="0" height="0" style="position:absolute">${symbolBuffer}</svg>`.trim(),
   };
 
-  declare public options: SpriteGeneratorOptions;
+  declare public options: Required<SpriteGeneratorOptions>;
   declare public fileQueue: MapIterator<string[]>;
 
-  constructor(options: SpriteGeneratorOptions) {
+  constructor(options: RequiredKeys<SpriteGeneratorOptions, 'inputFiles'>) {
     this.options = Object.assign({}, SpriteGenerator.defaults, options);
     this.fileQueue = this.options.inputFiles.entries();
   }

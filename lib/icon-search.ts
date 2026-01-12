@@ -1,4 +1,3 @@
-import { Glob } from 'bun';
 import { exists, glob } from 'node:fs/promises';
 import { resolve, join, dirname, basename } from 'node:path';
 
@@ -18,7 +17,7 @@ const Timers = {
 
 const pathIsNodeModule = (path: string) => !path.startsWith('.') && !path.startsWith('/');
 
-export default class IconSearch {
+export class IconSearch {
   public static tokenizer: RegExp = /[^a-za-z0-9_:-]+/;
 
   public static defaults: Partial<IconSearchOptions> = {
@@ -120,7 +119,8 @@ export default class IconSearch {
   }
 
   private idsForIcon(filePath: string) {
-    return this.idPrefixes.map((pfx) => `${pfx}${basename(filePath, '.svg')}`);
+    const baseId = basename(filePath, '.svg');
+    return [baseId, ...this.idPrefixes.map((pfx) => `${pfx}${baseId}`)];
   }
 
   private async resolvePackage(name: string) {
