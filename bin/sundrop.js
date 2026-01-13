@@ -5,6 +5,7 @@ import { watch as fsWatch, readFileSync } from 'node:fs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { bundleSprites } from '../index';
+import packageJSON from './package.json';
 
 const argv = yargs(hideBin(Bun.argv))
   .usage(`$0 --path PATH_TO_ICONS --out OUTPUT_PATH --files GLOB`)
@@ -60,6 +61,8 @@ const {
 } = argv;
 
 if (watch) {
+  console.log('Sundrop v%s started - watching project for changes.', packageJSON.version);
+
   let timeout;
 
   const debouncedBundler = () => {
@@ -71,6 +74,9 @@ if (watch) {
       timeout = null;
     }, 100);
   };
+
+  // run once explicitly on startup
+  debouncedBundler();
 
   const glob = new Glob(searchPattern);
   fsWatch(process.cwd(), { recursive: true }, (_eventType, filename) => {
