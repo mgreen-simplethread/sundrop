@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
-import { readFileSync } from 'node:fs';
+import { Glob } from 'bun';
+import { watch as fsWatch, readFileSync } from 'node:fs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { bundleSprites } from '../index';
@@ -21,7 +22,6 @@ const argv = yargs(hideBin(Bun.argv))
   .alias('o', 'out')
   .describe('o', 'Output file')
   .string('o')
-  // .demand('o')
   .alias('f', 'files')
   .string('f')
   .describe('f', 'Glob of files to search for icon names')
@@ -41,21 +41,46 @@ const argv = yargs(hideBin(Bun.argv))
   .alias('i', 'idPrefix')
   .describe('Prefix string to add to icon symbol IDs')
   .default('i', 'icon-')
+  .boolean('w')
+  .alias('w', 'watch')
+  .describe('w', 'Watch for changes and rebuild sprite sheet')
   .help()
   .alias('help', 'h')
   .version()
   .alias('version', 'v')
   .parse();
 
-if (argv.$0 === 'sundrop') {
-  const {
-    out,
-    path: paths,
-    alias: aliases = {},
-    files: searchPattern = '**/*',
-    idPrefix = '',
-  } = argv;
+const {
+  out,
+  path: paths,
+  alias: aliases = {},
+  files: searchPattern = '**/*',
+  idPrefix = '',
+  watch = false,
+} = argv;
 
+if (watch) {
+  let timeout;
+
+  const debouncedBundler = () => {
+    if (timeout) clearTimeout(timeout);
+
+    timeout = setTimeout(async () => {
+      console.log(searchPattern);
+      await bundleSprites({ out, paths, aliases, searchPattern, idPrefix });
+      timeout = null;
+    }, 100);
+  };
+
+  const glob = new Glob(searchPattern);
+  fsWatch(process.cwd(), { recursive: true }, (_eventType, filename) => {
+    if (!glob.match(filename)) {
+      return;
+    }
+
+    debouncedBundler();
+  });
+} else {
   bundleSprites({ out, paths, aliases, searchPattern, idPrefix })
     .then(() => {
       console.log('Thank you come again');

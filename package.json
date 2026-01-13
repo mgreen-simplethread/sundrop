@@ -1,6 +1,6 @@
 {
   "name": "sundrop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "module": "index.ts",
   "type": "module",
   "bin": {
@@ -18,7 +18,6 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "fast-xml-parser": "^5.3.3",
     "svgo": "^4.0.0",
     "yargs": "^18.0.0"
   },
