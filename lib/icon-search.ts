@@ -18,12 +18,13 @@ const Timers = {
 const pathIsNodeModule = (path: string) => !path.startsWith('.') && !path.startsWith('/');
 
 export class IconSearch {
-  public static tokenizer: RegExp = /[^a-za-z0-9_:-]+/;
+  public static tokenizer: RegExp = /[^a-zA-Z0-9_:-]+/;
 
   public static defaults: Partial<IconSearchOptions> = {
     cwd: process.cwd(),
     idPrefix: '',
     aliases: {},
+    paths: [],
     searchPattern: '**/*',
   };
 
@@ -45,7 +46,9 @@ export class IconSearch {
     console.time(Timers.SCAN);
 
     let filesScanned = 0;
-    const uniqueIcons = new Set<string>();
+    // Track which SVG files have already been matched to prevent bundling the same icon twice
+    // (e.g., when both "arrow" and "icon-arrow" or an alias reference the same file)
+    const bundledFilePaths = new Set<string>();
     const foundMatches = new Map<string, string>();
     const scanner = glob(this.options.searchPattern, {
       cwd: this.options.cwd as string,
@@ -68,8 +71,8 @@ export class IconSearch {
     // 3. Search the index against the found tokens
     // This turns the search inside out: We iterate the Index (7k items) checking against the Corpus (O(1) lookup)
     for (const [iconName, iconPath] of this.index) {
-      if (tokens.has(iconName) && !uniqueIcons.has(iconPath)) {
-        uniqueIcons.add(iconPath);
+      if (tokens.has(iconName) && !bundledFilePaths.has(iconPath)) {
+        bundledFilePaths.add(iconPath);
         foundMatches.set(iconName, iconPath);
       }
     }
