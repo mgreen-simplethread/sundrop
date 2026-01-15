@@ -17,6 +17,9 @@ const Timers = {
 
 const pathIsNodeModule = (path: string) => !path.startsWith('.') && !path.startsWith('/');
 
+// Batch size for parallel file reading - tune based on system I/O capacity
+const FILE_READ_BATCH_SIZE = 50;
+
 export class IconSearch {
   public static tokenizer: RegExp = /[^a-zA-Z0-9_:-]+/;
 
@@ -47,35 +50,62 @@ export class IconSearch {
 
     console.time(Timers.SCAN);
 
-    let filesScanned = 0;
     // Track which SVG files have already been matched to prevent bundling the same icon twice
     // (e.g., when both "arrow" and "icon-arrow" or an alias reference the same file)
     const bundledFilePaths = new Set<string>();
     const foundMatches = new Map<string, string>();
+
+    // Collect all file paths first for parallel reading
+    const filePaths: string[] = [];
     const scanner = glob(this.options.searchPattern, {
       cwd: this.options.cwd as string,
     });
 
-    // 1. Read all files into a single buffer
-    const chunks: string[] = [];
     for await (const filePath of scanner) {
-      const absPath = resolve(this.options.cwd, filePath);
-      const file = Bun.file(absPath);
-      chunks.push(await file.text());
-      filesScanned++;
+      filePaths.push(resolve(this.options.cwd, filePath));
     }
 
-    // 2. Tokenize the entire corpus at once
-    // We join with a newline to prevent tokens from merging across file boundaries
-    const corpus = chunks.join('\n');
-    const tokens = new Set(corpus.split(IconSearch.tokenizer));
+    // Track remaining icon names for early exit optimization
+    const remainingIconNames = new Set(this.index.keys());
+    let filesScanned = 0;
 
-    // 3. Search the index against the found tokens
-    // This turns the search inside out: We iterate the Index (7k items) checking against the Corpus (O(1) lookup)
-    for (const [iconName, iconPath] of this.index) {
-      if (tokens.has(iconName) && !bundledFilePaths.has(iconPath)) {
-        bundledFilePaths.add(iconPath);
-        foundMatches.set(iconName, iconPath);
+    // Process files in parallel batches
+    for (let i = 0; i < filePaths.length; i += FILE_READ_BATCH_SIZE) {
+      // Early exit: stop if we've found all icons
+      if (remainingIconNames.size === 0) {
+        console.log(
+          'Early exit: all icons found after scanning %d of %d files',
+          filesScanned,
+          filePaths.length,
+        );
+        break;
+      }
+
+      const batch = filePaths.slice(i, i + FILE_READ_BATCH_SIZE);
+
+      // Read batch of files in parallel
+      const fileContents = await Promise.all(batch.map((path) => Bun.file(path).text()));
+
+      // Tokenize each file separately (no join - saves memory)
+      for (const content of fileContents) {
+        filesScanned++;
+        const fileTokens = content.split(IconSearch.tokenizer);
+
+        for (const token of fileTokens) {
+          // Skip empty tokens or tokens not in our index
+          if (token.length === 0 || !remainingIconNames.has(token)) {
+            continue;
+          }
+
+          const iconPath = this.index.get(token)!;
+          if (!bundledFilePaths.has(iconPath)) {
+            bundledFilePaths.add(iconPath);
+            foundMatches.set(token, iconPath);
+          }
+
+          // Remove from remaining set (we found this icon name)
+          remainingIconNames.delete(token);
+        }
       }
     }
 
@@ -124,9 +154,15 @@ export class IconSearch {
     console.log('Indexed %d SVG icons + %d valid aliases', this.index.size, validAliases);
   }
 
-  private idsForIcon(filePath: string) {
+  private idsForIcon(filePath: string): string[] {
     const baseId = basename(filePath, '.svg');
-    return [baseId, ...this.idPrefixes.map((pfx) => `${pfx}${baseId}`)];
+    // Optimized: avoid spread and map for better performance
+    const ids = new Array<string>(1 + this.idPrefixes.length);
+    ids[0] = baseId;
+    for (let i = 0; i < this.idPrefixes.length; i++) {
+      ids[i + 1] = this.idPrefixes[i] + baseId;
+    }
+    return ids;
   }
 
   private async resolvePackage(name: string) {
