@@ -267,21 +267,21 @@ describe('SpriteGenerator', () => {
   describe('DEFAULT_SVGO_PLUGINS', () => {
     test('includes convertSvgToSymbol plugin', () => {
       const hasPlugin = DEFAULT_SVGO_PLUGINS.some(
-        (p) => typeof p === 'object' && p.name === 'convertSvgToSymbol'
+        (p) => typeof p === 'object' && p.name === 'convertSvgToSymbol',
       );
       expect(hasPlugin).toBe(true);
     });
 
     test('includes addCurrentColorFill plugin', () => {
       const hasPlugin = DEFAULT_SVGO_PLUGINS.some(
-        (p) => typeof p === 'object' && p.name === 'addCurrentColorFillAttr'
+        (p) => typeof p === 'object' && p.name === 'addCurrentColorFillAttr',
       );
       expect(hasPlugin).toBe(true);
     });
 
     test('includes removeAttrs plugin for width/height', () => {
       const removeAttrsPlugin = DEFAULT_SVGO_PLUGINS.find(
-        (p) => typeof p === 'object' && p.name === 'removeAttrs'
+        (p) => typeof p === 'object' && p.name === 'removeAttrs',
       );
       expect(removeAttrsPlugin).toBeDefined();
       expect((removeAttrsPlugin as any).params.attrs).toContain('width');
