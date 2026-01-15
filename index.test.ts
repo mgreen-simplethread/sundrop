@@ -159,7 +159,7 @@ describe('bundleSprites', () => {
     test('output contains optimized SVG sprite', async () => {
       await writeFile(
         join(srcDir, 'multi.html'),
-        '<use href="#arrow"></use><use href="#close"></use>'
+        '<use href="#arrow"></use><use href="#close"></use>',
       );
       const outputPath = join(tempDir, 'multi-test.svg');
 

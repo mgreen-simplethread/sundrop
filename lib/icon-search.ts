@@ -134,7 +134,7 @@ export class IconSearch {
 
     const isNamespaced = name.startsWith('@');
     const nameParts = name.split('/');
-    const pkgName = isNamespaced ? nameParts.slice(0, 2).join('/') : nameParts[0];
+    const pkgName = isNamespaced ? nameParts.slice(0, 2).join('/') : nameParts[0]!;
     const pkgSubpath = isNamespaced ? nameParts.slice(2) : nameParts.slice(1);
 
     try {
