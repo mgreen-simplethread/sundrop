@@ -31,11 +31,13 @@ export class IconSearch {
   public options: IconSearchOptions;
   public index: Map<string, string>;
   public idPrefixes: string[];
+  public invalidAliases: Set<string>;
 
   constructor(options: Partial<IconSearchOptions>) {
     this.options = Object.assign({}, IconSearch.defaults, options) as IconSearchOptions;
     this.index = new Map<string, string>();
     this.idPrefixes = [this.options.idPrefix].flat();
+    this.invalidAliases = new Set<string>();
   }
 
   async search() {
@@ -110,6 +112,7 @@ export class IconSearch {
 
       if (!isValid) {
         console.log('skipping invalid alias %s', alias);
+        this.invalidAliases.add(alias);
         continue;
       }
 
