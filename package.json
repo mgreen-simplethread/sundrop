@@ -28,6 +28,7 @@
     "printWidth": 100
   },
   "scripts": {
+    "test": "bun test **/*.test.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier -w ./lib/**/*.ts ./bin/*.ts"
   }
