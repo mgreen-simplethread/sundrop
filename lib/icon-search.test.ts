@@ -254,7 +254,7 @@ describe('IconSearch', () => {
       // Reference same icon by base name and prefixed name
       await writeFile(
         join(srcDir, 'dupes.html'),
-        '<use href="#arrow"></use><use href="#icon-arrow"></use>'
+        '<use href="#arrow"></use><use href="#icon-arrow"></use>',
       );
 
       const searcher = new IconSearch({
