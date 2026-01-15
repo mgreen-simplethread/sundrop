@@ -40,7 +40,7 @@ const argv = yargs(hideBin(Bun.argv))
   )
   .string('i')
   .alias('i', 'idPrefix')
-  .describe('Prefix string to add to icon symbol IDs')
+  .describe('i', 'Prefix string to add to icon symbol IDs')
   .default('i', 'icon-')
   .boolean('w')
   .alias('w', 'watch')
@@ -55,7 +55,7 @@ const {
   out,
   path: paths,
   alias: aliases = {},
-  files: searchPattern = '**/*',
+  files: searchPattern,
   idPrefix = '',
   watch = false,
 } = argv;
@@ -69,8 +69,7 @@ if (watch) {
     if (timeout) clearTimeout(timeout);
 
     timeout = setTimeout(async () => {
-      console.log(searchPattern);
-      await bundleSprites({ out, paths, aliases, searchPattern, idPrefix });
+      await bundleSprites({ cwd: process.cwd(), out, paths, aliases, searchPattern, idPrefix });
       timeout = null;
     }, 100);
   };
@@ -80,14 +79,14 @@ if (watch) {
 
   const glob = new Glob(searchPattern);
   fsWatch(process.cwd(), { recursive: true }, (_eventType, filename) => {
-    if (!glob.match(filename)) {
+    if (!filename || !glob.match(filename)) {
       return;
     }
 
     debouncedBundler();
   });
 } else {
-  bundleSprites({ out, paths, aliases, searchPattern, idPrefix })
+  bundleSprites({ cwd: process.cwd(), out, paths, aliases, searchPattern, idPrefix })
     .then(() => {
       console.log('Thank you come again');
     })

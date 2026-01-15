@@ -12,7 +12,7 @@ interface BundleSpritesConfig {
 
 export async function bundleSprites(config: BundleSpritesConfig) {
   const iconSearchConfig = {
-    cwd: process.cwd(),
+    cwd: config.cwd,
     paths: config.paths,
     aliases: config.aliases,
     searchPattern: config.searchPattern,
