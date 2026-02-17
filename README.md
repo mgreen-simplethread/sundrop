@@ -24,6 +24,10 @@ Options:
 
 ```
 
+## Requirements
+
+Sundrop requires [Bun](https://bun.com) as its runtime. It uses Bun-specific APIs and will not run on Node.js.
+
 ## Development
 
 To install dependencies:
