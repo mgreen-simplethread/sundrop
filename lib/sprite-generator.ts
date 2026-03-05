@@ -50,7 +50,12 @@ export const DEFAULT_SVGO_PLUGINS = [
   'inlineStyles',
   'minifyStyles',
   'cleanupNumericValues',
-  'convertColors',
+  {
+    name: 'convertColors',
+    params: {
+      currentColor: true,
+    },
+  },
   'removeUnknownsAndDefaults',
   'removeNonInheritableGroupAttrs',
   'removeUselessStrokeAndFill',
