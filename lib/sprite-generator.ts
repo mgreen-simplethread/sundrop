@@ -81,7 +81,7 @@ export const DEFAULT_SVGO_PLUGINS = [
   {
     name: 'removeAttrs',
     params: {
-      attrs: 'symbol:(width|height)',
+      attrs: ['symbol:(width|height)', 'path:(fill-opacity)'],
     },
   },
 ];
