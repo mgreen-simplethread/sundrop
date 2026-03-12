@@ -7,6 +7,7 @@ interface BundleSpritesConfig {
   aliases: Record<string, string>;
   searchPattern: string;
   idPrefix: string;
+  noFillIds?: string;
   out: string;
 }
 
@@ -32,6 +33,7 @@ export async function bundleSprites(config: BundleSpritesConfig) {
   const spriteGen = new SpriteGenerator({
     inputFiles: matches,
     idPrefix: config.idPrefix,
+    noFillIds: config.noFillIds,
   });
 
   const spriteSheet = await spriteGen.render();

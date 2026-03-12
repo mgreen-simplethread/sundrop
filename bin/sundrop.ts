@@ -43,6 +43,10 @@ const options = {
     type: 'string' as const,
     default: 'icon-',
   },
+  noFillIds: {
+    describe: 'Regex pattern — symbols whose ID matches will not have fill="currentColor" added',
+    type: 'string' as const,
+  },
   watch: {
     alias: 'w',
     describe: 'Watch for changes and rebuild sprite sheet',
@@ -67,7 +71,15 @@ const argv = yargs(hideBin(Bun.argv))
   .alias('version', 'v')
   .parseSync();
 
-const { out, path, alias: aliases = {}, files: searchPattern, idPrefix = '', watch = false } = argv;
+const {
+  out,
+  path,
+  alias: aliases = {},
+  files: searchPattern,
+  idPrefix = '',
+  noFillIds,
+  watch = false,
+} = argv;
 
 const paths = path as string[] | undefined;
 
@@ -85,7 +97,15 @@ if (watch) {
     if (timeout) clearTimeout(timeout);
 
     timeout = setTimeout(async () => {
-      await bundleSprites({ cwd: process.cwd(), out, paths, aliases, searchPattern, idPrefix });
+      await bundleSprites({
+        cwd: process.cwd(),
+        out,
+        paths,
+        aliases,
+        searchPattern,
+        idPrefix,
+        noFillIds,
+      });
       timeout = null;
     }, 100);
   };
@@ -102,7 +122,7 @@ if (watch) {
     debouncedBundler();
   });
 } else {
-  bundleSprites({ cwd: process.cwd(), out, paths, aliases, searchPattern, idPrefix })
+  bundleSprites({ cwd: process.cwd(), out, paths, aliases, searchPattern, idPrefix, noFillIds })
     .then(() => {
       console.log('Thank you come again');
     })

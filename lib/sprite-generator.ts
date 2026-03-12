@@ -19,22 +19,41 @@ const convertSvgToSymbol: CustomPlugin = {
 
 const addCurrentColorFill: CustomPlugin = {
   name: 'addCurrentColorFillAttr',
-  fn: () => ({
-    element: {
-      enter: (node: XastElement) => {
-        // Leave existing fill attrs and styles intact
-        if (
-          !['path', 'ellipse', 'rect', 'circle'].includes(node.name) ||
-          node.attributes.fill ||
-          node.attributes.style?.includes('fill:')
-        ) {
-          return;
-        }
+  fn: (_root, params) => {
+    const skipPattern = params?.skipIds ? new RegExp(params.skipIds as string) : null;
+    let skipCurrentSymbol = false;
 
-        node.attributes.fill = 'currentColor';
+    return {
+      element: {
+        enter: (node: XastElement) => {
+          if (node.name === 'symbol') {
+            skipCurrentSymbol = !!(
+              skipPattern &&
+              node.attributes.id &&
+              skipPattern.test(node.attributes.id)
+            );
+            return;
+          }
+
+          if (
+            skipCurrentSymbol ||
+            !['path', 'ellipse', 'rect', 'circle'].includes(node.name) ||
+            node.attributes.fill ||
+            node.attributes.style?.includes('fill:')
+          ) {
+            return;
+          }
+
+          node.attributes.fill = 'currentColor';
+        },
+        exit: (node: XastElement) => {
+          if (node.name === 'symbol') {
+            skipCurrentSymbol = false;
+          }
+        },
       },
-    },
-  }),
+    };
+  },
 };
 
 export const DEFAULT_SVGO_PLUGINS = [
@@ -90,6 +109,7 @@ interface SpriteGeneratorOptions {
   inputFiles?: Map<string, string>;
   svgoPlugins?: Array<any>;
   idPrefix?: string;
+  noFillIds?: string;
   transformIcon?: (json: any) => any;
   spriteTemplate?: (symbolBuffer: string) => string;
 }
@@ -106,11 +126,22 @@ export class SpriteGenerator {
       `<svg width="0" height="0" style="position:absolute">${symbolBuffer}</svg>`.trim(),
   };
 
-  declare public options: Required<SpriteGeneratorOptions>;
+  declare public options: RequiredKeys<
+    SpriteGeneratorOptions,
+    'inputFiles' | 'svgoPlugins' | 'transformIcon' | 'idPrefix' | 'spriteTemplate'
+  >;
   declare public fileQueue: MapIterator<string[]>;
 
   constructor(options: RequiredKeys<SpriteGeneratorOptions, 'inputFiles'>) {
     this.options = Object.assign({}, SpriteGenerator.defaults, options);
+    if (options.noFillIds) {
+      this.options.svgoPlugins = this.options.svgoPlugins.map((p) => {
+        if (typeof p === 'object' && p.name === 'addCurrentColorFillAttr') {
+          return { ...p, params: { skipIds: options.noFillIds } };
+        }
+        return p;
+      });
+    }
     this.fileQueue = this.options.inputFiles.entries();
   }
 

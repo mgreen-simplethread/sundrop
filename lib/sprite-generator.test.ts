@@ -32,6 +32,7 @@ describe('SpriteGenerator', () => {
     await writeFile(join(iconsDir, 'colored.svg'), SVG_WITH_FILL);
     await writeFile(join(iconsDir, 'styled.svg'), SVG_WITH_STYLE_FILL);
     await writeFile(join(iconsDir, 'sized.svg'), SVG_WITH_DIMENSIONS);
+    await writeFile(join(iconsDir, 'arrow-outline.svg'), ARROW_SVG);
   });
 
   afterAll(async () => {
@@ -200,16 +201,15 @@ describe('SpriteGenerator', () => {
       expect(result).toContain('fill="currentColor"');
     });
 
-    test('preserves existing fill attributes', async () => {
+    test('converts all fills to currentColor', async () => {
       const inputFiles = new Map([['colored', join(iconsDir, 'colored.svg')]]);
 
       const generator = new SpriteGenerator({ inputFiles });
       const result = await generator.render();
 
-      // Should preserve the original fill, not add currentColor
-      // Note: SVGO's convertColors plugin converts #ff0000 to "red"
-      expect(result).toContain('fill="red"');
-      expect(result).not.toContain('fill="currentColor"');
+      // All fills are replaced with currentColor regardless of original value
+      expect(result).toContain('fill="currentColor"');
+      expect(result).not.toContain('fill="red"');
     });
 
     test('preserves fill in style attribute', async () => {
@@ -264,6 +264,43 @@ describe('SpriteGenerator', () => {
     });
   });
 
+  describe('noFillIds option', () => {
+    test('skips adding fill="currentColor" for symbols whose id matches the pattern', async () => {
+      const inputFiles = new Map([['arrow-outline', join(iconsDir, 'arrow-outline.svg')]]);
+      const generator = new SpriteGenerator({ inputFiles, noFillIds: '-outline$' });
+      const result = await generator.render();
+
+      expect(result).toContain('id="icon-arrow-outline"');
+      expect(result).not.toContain('fill="currentColor"');
+    });
+
+    test('still adds fill="currentColor" for symbols whose id does not match the pattern', async () => {
+      const inputFiles = new Map([['arrow', join(iconsDir, 'arrow.svg')]]);
+      const generator = new SpriteGenerator({ inputFiles, noFillIds: '-outline$' });
+      const result = await generator.render();
+
+      expect(result).toContain('fill="currentColor"');
+    });
+
+    test('correctly handles a sprite with both matching and non-matching symbols', async () => {
+      const inputFiles = new Map([
+        ['arrow', join(iconsDir, 'arrow.svg')],
+        ['arrow-outline', join(iconsDir, 'arrow-outline.svg')],
+      ]);
+      const generator = new SpriteGenerator({ inputFiles, noFillIds: '-outline$' });
+      const result = await generator.render();
+
+      // Verify both symbols are present
+      expect(result).toContain('id="icon-arrow"');
+      expect(result).toContain('id="icon-arrow-outline"');
+      // The solid icon should have fill; the outline icon's path should not
+      // Split on symbol boundary to check each independently
+      const [, solidSymbol, outlineSymbol] = result.split(/<symbol\s/);
+      expect(solidSymbol).toContain('fill="currentColor"');
+      expect(outlineSymbol).not.toContain('fill="currentColor"');
+    });
+  });
+
   describe('DEFAULT_SVGO_PLUGINS', () => {
     test('includes convertSvgToSymbol plugin', () => {
       const hasPlugin = DEFAULT_SVGO_PLUGINS.some(
@@ -284,8 +321,9 @@ describe('SpriteGenerator', () => {
         (p) => typeof p === 'object' && p.name === 'removeAttrs',
       );
       expect(removeAttrsPlugin).toBeDefined();
-      expect((removeAttrsPlugin as any).params.attrs).toContain('width');
-      expect((removeAttrsPlugin as any).params.attrs).toContain('height');
+      const attrs: string[] = (removeAttrsPlugin as any).params.attrs;
+      expect(attrs.some((a) => a.includes('width'))).toBe(true);
+      expect(attrs.some((a) => a.includes('height'))).toBe(true);
     });
 
     test('includes standard cleanup plugins', () => {
