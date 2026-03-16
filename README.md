@@ -24,6 +24,35 @@ Options:
 
 ```
 
+## Configuration
+
+Sundrop can be configured via a JSON config file (`--config`), a `"sundrop"` key in your `package.json`, or CLI flags. CLI flags override config file values.
+
+```json
+{
+  "path": ["./icons", "@my-org/icons/svg"],
+  "out": "./dist/sprites.svg",
+  "files": "./**/*.{html,css,jsx,tsx}",
+  "alias": {
+    "close": "x-mark",
+    "remove": "trash"
+  },
+  "idPrefix": "icon-",
+  "noFillIds": "logo|brand",
+  "watch": false
+}
+```
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `path` | `string[]` | — | Directories or node modules to search for SVG icons |
+| `out` | `string` | **(required)** | Output file path for the generated sprite sheet |
+| `files` | `string` | `"./**/*.{html,css}"` | Glob pattern for project files to scan for icon references |
+| `alias` | `object` | `{}` | Map of alias names to real icon names |
+| `idPrefix` | `string` | `"icon-"` | Prefix added to each `<symbol>` ID in the sprite |
+| `noFillIds` | `string` | — | Regex pattern — symbols whose ID matches skip `fill="currentColor"` |
+| `watch` | `boolean` | `false` | Watch for file changes and rebuild automatically |
+
 ## Requirements
 
 Sundrop requires [Bun](https://bun.com) as its runtime. It uses Bun-specific APIs and will not run on Node.js.
