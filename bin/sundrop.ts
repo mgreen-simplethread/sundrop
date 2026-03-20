@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { Glob } from 'bun';
 import { watch as fsWatch, readFileSync } from 'node:fs';
+import { Glob } from 'bun';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { bundleSprites } from '../index';

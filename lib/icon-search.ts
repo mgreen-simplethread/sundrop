@@ -1,5 +1,5 @@
 import { exists, glob } from 'node:fs/promises';
-import { resolve, join, dirname, basename } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 
 interface IconSearchOptions {
   cwd: string; // base directory to search for references to icons
@@ -95,7 +95,7 @@ export class IconSearch {
         cwd: searchPath,
       });
 
-      for await (let filePath of scanner) {
+      for await (const filePath of scanner) {
         const absPath = resolve(searchPath, filePath);
         const ids = this.idsForIcon(absPath);
 
@@ -140,7 +140,7 @@ export class IconSearch {
     try {
       const modulePackageJson = await import.meta.resolve(join(pkgName, 'package.json'));
       resolvedPath = join(dirname(modulePackageJson.replace('file://', '')), ...pkgSubpath);
-    } catch (error) {
+    } catch (_error) {
       console.log(`Could not resolve ${pkgName}, trying to match path directly in node_modules`);
 
       resolvedPath = join(process.cwd(), 'node_modules', name);

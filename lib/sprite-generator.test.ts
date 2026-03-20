@@ -1,8 +1,8 @@
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
-import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { SpriteGenerator, DEFAULT_SVGO_PLUGINS } from './sprite-generator';
+import { DEFAULT_SVGO_PLUGINS, SpriteGenerator } from './sprite-generator';
 
 // Sample SVG content for fixtures
 const ARROW_SVG = '<svg viewBox="0 0 24 24"><path d="M12 4l-8 8h16z"/></svg>';
@@ -231,8 +231,8 @@ describe('SpriteGenerator', () => {
       // The symbol should not have width/height (outer svg may have width="0" height="0")
       const symbolMatch = result.match(/<symbol[^>]*>/);
       expect(symbolMatch).not.toBeNull();
-      expect(symbolMatch![0]).not.toContain('width="24"');
-      expect(symbolMatch![0]).not.toContain('height="24"');
+      expect(symbolMatch?.[0]).not.toContain('width="24"');
+      expect(symbolMatch?.[0]).not.toContain('height="24"');
     });
 
     test('returns optimized SVG string', async () => {

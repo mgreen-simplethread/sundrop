@@ -1,5 +1,5 @@
-import { optimize } from 'svgo';
 import type { CustomPlugin, XastElement, XastParent } from 'svgo';
+import { optimize } from 'svgo';
 import type { RequiredKeys } from './types';
 
 const convertSvgToSymbol: CustomPlugin = {
@@ -126,11 +126,11 @@ export class SpriteGenerator {
       `<svg width="0" height="0" style="position:absolute">${symbolBuffer}</svg>`.trim(),
   };
 
-  declare public options: RequiredKeys<
+  public declare options: RequiredKeys<
     SpriteGeneratorOptions,
     'inputFiles' | 'svgoPlugins' | 'transformIcon' | 'idPrefix' | 'spriteTemplate'
   >;
-  declare public fileQueue: MapIterator<string[]>;
+  public declare fileQueue: MapIterator<string[]>;
 
   constructor(options: RequiredKeys<SpriteGeneratorOptions, 'inputFiles'>) {
     this.options = Object.assign({}, SpriteGenerator.defaults, options);

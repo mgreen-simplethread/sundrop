@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeAll, afterAll, spyOn } from 'bun:test';
-import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises';
+import { afterAll, beforeAll, describe, expect, spyOn, test } from 'bun:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { bundleSprites } from './index';

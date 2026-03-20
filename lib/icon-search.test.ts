@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
-import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { IconSearch } from './icon-search';
