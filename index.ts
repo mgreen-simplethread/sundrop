@@ -1,3 +1,4 @@
+import { writeFile } from 'node:fs/promises';
 import { IconSearch } from './lib/icon-search';
 import { SpriteGenerator } from './lib/sprite-generator';
 
@@ -37,8 +38,8 @@ export async function bundleSprites(config: BundleSpritesConfig) {
   });
 
   const spriteSheet = await spriteGen.render();
-  const outFile = Bun.file(config.out);
-  const bytes = await Bun.write(outFile, spriteSheet);
+  await writeFile(config.out, spriteSheet);
+  const bytes = Buffer.byteLength(spriteSheet);
 
   console.log('Saved SVG sprite to %s (%d bytes)', config.out, bytes);
 }

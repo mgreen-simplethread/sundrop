@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { CustomPlugin, XastElement, XastParent } from 'svgo';
 import { optimize } from 'svgo';
 import type { RequiredKeys } from './types';
@@ -150,7 +151,7 @@ export class SpriteGenerator {
     const fileContents = [];
     for (const [id, file] of this.fileQueue) {
       if (!file) continue;
-      const svg = await Bun.file(file).text();
+      const svg = await readFile(file, 'utf-8');
       const outputId = id ? `${this.options.idPrefix}${id}` : id;
       fileContents.push(svg.replace(/^<svg\s+/, `<svg id="${outputId}" `));
     }

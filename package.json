@@ -1,29 +1,36 @@
 {
   "name": "sundrop-svg",
-  "version": "0.1.13",
-  "module": "index.ts",
+  "version": "0.2.0",
   "type": "module",
-  "packageManager": "bun@1.3.10",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "author": "Mike Green <mike.is.green@gmail.com>",
   "bin": {
-    "sundrop": "bin/sundrop.ts"
+    "sundrop": "dist/bin/sundrop.js"
   },
+  "files": ["dist"],
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
     "@types/bun": "^1.3.11",
+    "@types/node": "^22.0.0",
+    "@types/picomatch": "^4.0.0",
     "@types/yargs": "^17.0.35",
-    "npm-bump": "^0.0.42"
-  },
-  "peerDependencies": {
+    "npm-bump": "^0.0.42",
+    "tsdown": "^0.12.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "picomatch": "^4.0.0",
     "svgo": "^4.0.1",
     "yargs": "^18.0.0"
   },
   "scripts": {
+    "build": "tsdown",
     "typecheck": "tsc --noEmit",
     "format": "biome check --write .",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "prepublishOnly": "bun run build"
   }
 }

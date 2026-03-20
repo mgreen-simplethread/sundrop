@@ -1,7 +1,7 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
 import { watch as fsWatch, readFileSync } from 'node:fs';
-import { Glob } from 'bun';
+import picomatch from 'picomatch';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { bundleSprites } from '../index';
@@ -54,7 +54,7 @@ const options = {
   },
 };
 
-const argv = yargs(hideBin(Bun.argv))
+const argv = yargs(hideBin(process.argv))
   .usage(`$0 --path PATH_TO_ICONS --out OUTPUT_PATH --files GLOB`)
   .scriptName('sundrop')
   .pkgConf('sundrop')
@@ -113,9 +113,9 @@ if (watch) {
   // run once explicitly on startup
   debouncedBundler();
 
-  const glob = new Glob(searchPattern);
+  const isMatch = picomatch(searchPattern);
   fsWatch(process.cwd(), { recursive: true }, (_eventType, filename) => {
-    if (!filename || !glob.match(filename)) {
+    if (!filename || !isMatch(filename)) {
       return;
     }
 

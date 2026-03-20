@@ -1,4 +1,5 @@
-import { exists, glob } from 'node:fs/promises';
+import { access, glob, readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { basename, dirname, join, resolve } from 'node:path';
 
 interface IconSearchOptions {
@@ -60,8 +61,7 @@ export class IconSearch {
     const chunks: string[] = [];
     for await (const filePath of scanner) {
       const absPath = resolve(this.options.cwd, filePath);
-      const file = Bun.file(absPath);
-      chunks.push(await file.text());
+      chunks.push(await readFile(absPath, 'utf-8'));
       filesScanned++;
     }
 
@@ -138,16 +138,18 @@ export class IconSearch {
     const pkgSubpath = isNamespaced ? nameParts.slice(2) : nameParts.slice(1);
 
     try {
-      const modulePackageJson = await import.meta.resolve(join(pkgName, 'package.json'));
-      resolvedPath = join(dirname(modulePackageJson.replace('file://', '')), ...pkgSubpath);
+      const require = createRequire(import.meta.url);
+      const modulePackageJson = require.resolve(join(pkgName, 'package.json'));
+      resolvedPath = join(dirname(modulePackageJson), ...pkgSubpath);
     } catch (_error) {
       console.log(`Could not resolve ${pkgName}, trying to match path directly in node_modules`);
 
       resolvedPath = join(process.cwd(), 'node_modules', name);
       console.debug('resolvedPath: %s', resolvedPath);
-      const pathExists = await exists(resolvedPath);
 
-      if (!pathExists) {
+      try {
+        await access(resolvedPath);
+      } catch {
         throw new Error(`Could not resolve ${pkgName}`);
       }
     }

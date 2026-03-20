@@ -4,7 +4,7 @@
 
 Sundrop is a CLI tool (and library) that builds SVG sprite sheets. It scans project files for references to icon names, finds matching SVG files in configured paths (local dirs or node_modules), optimizes them with SVGO, converts them to `<symbol>` elements, and outputs a single SVG sprite sheet.
 
-**Runtime:** Bun (not Node). Use `bun` for all execution, testing, and package management.
+**Runtime:** The library and CLI run on both Node.js and Bun. Development tooling (testing, package management) uses Bun. Use `bun` for all dev workflows.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ Sundrop is a CLI tool (and library) that builds SVG sprite sheets. It scans proj
 
 ### Core Modules (`lib/`)
 
-- `icon-search.ts` - `IconSearch` class. Builds an index of available SVG icons from configured paths (supports local dirs and npm packages via `import.meta.resolve`). Scans project files matching a glob pattern, tokenizes the corpus, then does O(1) lookups against the index to find referenced icons. Supports icon aliases and ID prefixes.
+- `icon-search.ts` - `IconSearch` class. Builds an index of available SVG icons from configured paths (supports local dirs and npm packages via `createRequire().resolve()`). Scans project files matching a glob pattern, tokenizes the corpus, then does O(1) lookups against the index to find referenced icons. Supports icon aliases and ID prefixes.
 - `sprite-generator.ts` - `SpriteGenerator` class. Takes matched icon files, concatenates their SVG content with prefixed IDs, then runs through SVGO with custom plugins (`convertSvgToSymbol`, `addCurrentColorFill`) to produce the final sprite sheet.
 - `types.ts` - Utility type `RequiredKeys<T, K>` used to make specific keys required.
 
@@ -23,6 +23,8 @@ Sundrop is a CLI tool (and library) that builds SVG sprite sheets. It scans proj
 
 - `svgo` (v4) - SVG optimization. Custom plugins in `sprite-generator.ts` convert `<svg>` to `<symbol>` and add `fill="currentColor"` to shape elements.
 - `yargs` (v18) - CLI argument parsing with config file support (`--config` / `pkgConf`).
+- `picomatch` (v4) - Glob pattern matching for `--watch` mode file filtering.
+- `tsdown` - Build tool that compiles TypeScript source to `dist/` for Node.js consumption.
 
 ### Data Flow
 
@@ -36,7 +38,9 @@ Sundrop is a CLI tool (and library) that builds SVG sprite sheets. It scans proj
 
 Execute scripts using `bun run`:
 
-- `format` - runs `prettier` on all source files
+- `build` - compiles TypeScript to `dist/` via tsdown
+- `format` - runs Biome formatter/linter with auto-fix on all source files
+- `lint` - runs Biome checks without auto-fix
 - `typecheck` - runs `tsc --noEmit` for project-wide static type check
 
 ### Unit Test Suite
@@ -51,8 +55,8 @@ Run unit tests using `bun test`. Test files live alongside source in `lib/` (`*.
 
 ## Code Style
 
-- Prettier config: 2-space tabs, semicolons, single quotes, 100 char print width (see `package.json` `prettier` key).
-- TypeScript with Bun types. Uses Bun-specific APIs (`Bun.file()`, `Bun.write()`, `Bun.argv`, `import.meta.resolve`).
+- Biome config (`biome.json`): 2-space indent, semicolons, single quotes, 100 char line width.
+- TypeScript targeting Node.js APIs (`node:fs/promises`, `node:module`, `node:path`). All source uses standard Node APIs for cross-runtime compatibility.
 
 ## Git Conventions
 
